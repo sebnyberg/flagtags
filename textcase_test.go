@@ -1,12 +1,10 @@
-package flagtags_test
+package flagtags
 
 import (
 	"testing"
-
-	"github.com/sebnyberg/flagtags"
 )
 
-func TestToSnakeCase(t *testing.T) {
+func Test_toSnakeCase(t *testing.T) {
 	tests := []struct {
 		input string
 		want  string
@@ -22,7 +20,7 @@ func TestToSnakeCase(t *testing.T) {
 		{"ID0Value", "id0_value"},
 	}
 	for _, test := range tests {
-		have := flagtags.ToSnakeCase(test.input)
+		have := toSnakeCase(test.input)
 		if have != test.want {
 			t.Errorf("input=%q:\nhave: %q\nwant: %q", test.input, have, test.want)
 		}
