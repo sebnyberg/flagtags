@@ -21,9 +21,6 @@ flags := []cli.Flag{
   cli.StringFlag{Name: "jwt-sign-key", EnvVars: []string{"JWT_SIGN_KEY"}, Value: "", Destination: &conf.JWTSignKey},
 }
 ```
-
-In the case where the config is massive, this leads to a lot of repetition and redundancy.
-
 This package provides some sensible defaults and tags for placing this initialization directly in the struct.
 
 Equivalent code this library:
