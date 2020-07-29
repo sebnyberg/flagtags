@@ -77,14 +77,14 @@ func parseFlag(t reflect.StructField, v reflect.Value) (cli.Flag, error) {
 	name, ok := t.Tag.Lookup("name")
 	// If not set, infer from struct field name
 	if !ok {
-		name = ToKebabCase(t.Name)
+		name = toKebabCase(t.Name)
 	}
 
 	// If not set, infer from struct field name
 	var env string
 	env, ok = t.Tag.Lookup("env")
 	if !ok {
-		env = ToScreamingSnakeCase(t.Name)
+		env = toScreamingSnakeCase(t.Name)
 	}
 
 	if !v.CanSet() {
