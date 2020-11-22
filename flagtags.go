@@ -31,7 +31,7 @@ func MustParseFlags(s interface{}) []cli.Flag {
 
 // ParseFlags parses flags from the struct fields and their tags.
 //
-// Supported field types are "int", "string", "bool".
+// Supported field types are "int", "string", "bool", "float64".
 // Supported tags are "name", "env", "value", "usage".
 //
 // By default (without tags),
@@ -108,7 +108,7 @@ func parseFlag(t reflect.StructField, v reflect.Value) (cli.Flag, error) {
 			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
 		}
 		// Parse value
-		if len(strValue) == 0 {
+		if strValue == "" {
 			return intFlag(name, 0, dst, env, usage), nil
 		}
 		i, err := strconv.Atoi(strValue)
@@ -116,6 +116,20 @@ func parseFlag(t reflect.StructField, v reflect.Value) (cli.Flag, error) {
 			return nil, fmt.Errorf("failed to parse provided value '%v' as an int, err: %w", strValue, err)
 		}
 		return intFlag(name, i, dst, env, usage), nil
+	case reflect.Float64:
+		dst, ok := iface.(*float64)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
+		}
+		// Parse value
+		if strValue == "" {
+			return float64Flag(name, 0, dst, env, usage), nil
+		}
+		f, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse provided value '%v' as an int, err: %w", strValue, err)
+		}
+		return float64Flag(name, f, dst, env, usage), nil
 	case reflect.Bool:
 		dst, ok := iface.(*bool)
 		if !ok {
@@ -145,4 +159,8 @@ func boolFlag(name string, value bool, destination *bool, envVar string, usage s
 
 func intFlag(name string, value int, destination *int, envVar string, usage string) *cli.IntFlag {
 	return &cli.IntFlag{Name: name, Value: value, EnvVars: []string{envVar}, Destination: destination, Usage: usage}
+}
+
+func float64Flag(name string, value float64, destination *float64, envVar string, usage string) *cli.Float64Flag {
+	return &cli.Float64Flag{Name: name, Value: value, EnvVars: []string{envVar}, Destination: destination, Usage: usage}
 }

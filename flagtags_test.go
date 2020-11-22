@@ -45,34 +45,42 @@ func Test_ParseFlags_Validation(t *testing.T) {
 
 func Test_ParseFlags(t *testing.T) {
 	var testStruct struct {
-		A           string `name:"a" env:"A" value:"a" usage:"use A"`
-		B           int    `name:"b" env:"B" value:"1" usage:"use B"`
-		C           bool   `name:"c" env:"C" value:"true" usage:"use C"`
+		S           string  `name:"s" env:"S" value:"s" usage:"S"`
+		I           int     `name:"i" env:"I" value:"1" usage:"I"`
+		B           bool    `name:"b" env:"B" value:"true" usage:"B"`
+		F64         float64 `name:"f64" env:"F64" value:"0.5" usage:"F64"`
 		HostURL     string
 		GRPCEnabled bool
 	}
 
 	expected := []cli.Flag{
 		&cli.StringFlag{
-			Name:        "a",
-			EnvVars:     []string{"A"},
-			Value:       "a",
-			Destination: &testStruct.A,
-			Usage:       "use A",
+			Name:        "s",
+			EnvVars:     []string{"S"},
+			Value:       "s",
+			Destination: &testStruct.S,
+			Usage:       "S",
 		},
 		&cli.IntFlag{
-			Name:        "b",
-			EnvVars:     []string{"B"},
+			Name:        "i",
+			EnvVars:     []string{"I"},
 			Value:       1,
-			Destination: &testStruct.B,
-			Usage:       "use B",
+			Destination: &testStruct.I,
+			Usage:       "I",
 		},
 		&cli.BoolFlag{
-			Name:        "c",
-			EnvVars:     []string{"C"},
+			Name:        "b",
+			EnvVars:     []string{"B"},
 			Value:       true,
-			Destination: &testStruct.C,
-			Usage:       "use C",
+			Destination: &testStruct.B,
+			Usage:       "B",
+		},
+		&cli.Float64Flag{
+			Name:        "f64",
+			EnvVars:     []string{"F64"},
+			Value:       0.5,
+			Destination: &testStruct.F64,
+			Usage:       "F64",
 		},
 		&cli.StringFlag{
 			Name:        "host-url",
@@ -92,9 +100,9 @@ func Test_ParseFlags(t *testing.T) {
 
 	flags, err := flagtags.ParseFlags(&testStruct)
 	if err != nil {
-		t.Errorf("expected nil error, got: %v", err)
+		t.Fatalf("expected nil error, got: %v", err)
 	}
 	if !cmp.Equal(flags, expected) {
-		t.Errorf("parsed flag did not match expected, got\n%v", cmp.Diff(expected, flags))
+		t.Errorf("parsed flag did not match expected, got/want\n%v", cmp.Diff(expected, flags))
 	}
 }
