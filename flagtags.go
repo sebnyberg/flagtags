@@ -60,19 +60,19 @@ func ParseFlags(s interface{}) ([]cli.Flag, error) {
 
 	t := reflect.TypeOf(s).Elem()
 
-	flags := make([]cli.Flag, v.NumField())
-	var err error
+	flags := make([]cli.Flag, 0, v.NumField())
 	for i := 0; i < v.NumField(); i++ {
-		flags[i], err = parseFlag(t.Field(i), v.Field(i))
+		newFlags, err := flagsFromField(t.Field(i), v.Field(i))
 		if err != nil {
 			return nil, err
 		}
+		flags = append(flags, newFlags...)
 	}
 
 	return flags, nil
 }
 
-func parseFlag(t reflect.StructField, v reflect.Value) (cli.Flag, error) {
+func flagsFromField(t reflect.StructField, v reflect.Value) ([]cli.Flag, error) {
 	var name string
 	name, ok := t.Tag.Lookup("name")
 	// If not set, infer from struct field name
@@ -96,54 +96,53 @@ func parseFlag(t reflect.StructField, v reflect.Value) (cli.Flag, error) {
 	iface := v.Addr().Interface()
 
 	switch v.Kind() {
+	case reflect.Struct:
+		return ParseFlags(iface)
 	case reflect.String:
 		dst, ok := iface.(*string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
 		}
-		return stringFlag(name, strValue, dst, env, usage), nil
+		return []cli.Flag{stringFlag(name, strValue, dst, env, usage)}, nil
 	case reflect.Int:
 		dst, ok := iface.(*int)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
 		}
-		// Parse value
 		if strValue == "" {
-			return intFlag(name, 0, dst, env, usage), nil
+			return []cli.Flag{intFlag(name, 0, dst, env, usage)}, nil
 		}
 		i, err := strconv.Atoi(strValue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provided value '%v' as an int, err: %w", strValue, err)
 		}
-		return intFlag(name, i, dst, env, usage), nil
+		return []cli.Flag{intFlag(name, i, dst, env, usage)}, nil
 	case reflect.Float64:
 		dst, ok := iface.(*float64)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
 		}
-		// Parse value
 		if strValue == "" {
-			return float64Flag(name, 0, dst, env, usage), nil
+			return []cli.Flag{float64Flag(name, 0, dst, env, usage)}, nil
 		}
 		f, err := strconv.ParseFloat(strValue, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provided value '%v' as an int, err: %w", strValue, err)
 		}
-		return float64Flag(name, f, dst, env, usage), nil
+		return []cli.Flag{float64Flag(name, f, dst, env, usage)}, nil
 	case reflect.Bool:
 		dst, ok := iface.(*bool)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse address of field %v", t.Name)
 		}
-		// Parse value
 		if len(strValue) == 0 {
-			return boolFlag(name, false, dst, env, usage), nil
+			return []cli.Flag{boolFlag(name, false, dst, env, usage)}, nil
 		}
 		b, err := strconv.ParseBool(strValue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provided value '%v' as an int, err: %w", strValue, err)
 		}
-		return boolFlag(name, b, dst, env, usage), nil
+		return []cli.Flag{boolFlag(name, b, dst, env, usage)}, nil
 	default:
 		return nil, fmt.Errorf("%w: type '%v' is not supported yet", ErrNotSupported, v.Kind())
 	}

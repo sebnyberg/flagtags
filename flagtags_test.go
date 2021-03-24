@@ -106,3 +106,29 @@ func Test_ParseFlags(t *testing.T) {
 		t.Errorf("parsed flag did not match expected, got/want\n%v", cmp.Diff(expected, flags))
 	}
 }
+
+func Test_ParseFlags_EmbeddedStruct(t *testing.T) {
+	type EmbeddedStruct struct {
+		A string `name:"a"`
+	}
+
+	var testStruct struct {
+		EmbeddedStruct
+	}
+
+	expected := []cli.Flag{
+		&cli.StringFlag{
+			Name:        "a",
+			Destination: &testStruct.A,
+			EnvVars:     []string{"A"},
+		},
+	}
+
+	flags, err := flagtags.ParseFlags(&testStruct)
+	if err != nil {
+		t.Fatalf("expected nil error, got: %v", err)
+	}
+	if !cmp.Equal(flags, expected) {
+		t.Errorf("parsed flag did not match expected, got/want\n%v", cmp.Diff(expected, flags))
+	}
+}
