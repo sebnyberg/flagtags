@@ -93,6 +93,9 @@ func flagsFromField(t reflect.StructField, v reflect.Value) ([]cli.Flag, error) 
 
 	strValue, _ := t.Tag.Lookup("value")
 	usage, _ := t.Tag.Lookup("usage")
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
 	iface := v.Addr().Interface()
 
 	switch v.Kind() {

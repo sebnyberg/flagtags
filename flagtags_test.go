@@ -108,12 +108,20 @@ func Test_ParseFlags(t *testing.T) {
 }
 
 func Test_ParseFlags_EmbeddedStruct(t *testing.T) {
-	type EmbeddedStruct struct {
+	type E1 struct {
 		A string `name:"a"`
 	}
+	type E2 struct {
+		B string `name:"b"`
+	}
 
-	var testStruct struct {
-		EmbeddedStruct
+	type T struct {
+		E1
+		*E2
+	}
+
+	testStruct := T{
+		E2: &E2{},
 	}
 
 	expected := []cli.Flag{
@@ -121,6 +129,11 @@ func Test_ParseFlags_EmbeddedStruct(t *testing.T) {
 			Name:        "a",
 			Destination: &testStruct.A,
 			EnvVars:     []string{"A"},
+		},
+		&cli.StringFlag{
+			Name:        "b",
+			Destination: &testStruct.B,
+			EnvVars:     []string{"B"},
 		},
 	}
 
