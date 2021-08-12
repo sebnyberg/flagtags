@@ -60,16 +60,17 @@ func ParseFlags(s interface{}) ([]cli.Flag, error) {
 
 	t := reflect.TypeOf(s).Elem()
 
+	var err error
 	flags := make([]cli.Flag, 0, v.NumField())
 	for i := 0; i < v.NumField(); i++ {
-		newFlags, err := flagsFromField(t.Field(i), v.Field(i))
-		if err != nil {
-			return nil, err
+		newFlags, fieldErr := flagsFromField(t.Field(i), v.Field(i))
+		if fieldErr != nil && err == nil {
+			err = fieldErr
 		}
 		flags = append(flags, newFlags...)
 	}
 
-	return flags, nil
+	return flags, err
 }
 
 func flagsFromField(t reflect.StructField, v reflect.Value) ([]cli.Flag, error) {
