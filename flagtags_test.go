@@ -27,7 +27,7 @@ func Test_ParseFlags_Validation(t *testing.T) {
 			&struct {
 				name string `name:"a" env:"b"`
 			}{"a"},
-			nil,
+			[]cli.Flag{},
 			flagtags.ErrPrivateField,
 		},
 	} {
