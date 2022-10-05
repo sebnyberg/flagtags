@@ -44,7 +44,7 @@ func main() {
 			Destination: &conf.JWTSignKey,
 		},
 	}
-	app := &cli.App{flags: flags}
+	app := &cli.App{Flags: flags}
 	app.Run(os.Args)
 }
 ```
@@ -56,7 +56,12 @@ Equivalent code using flagtags:
 ```go
 package main
 
-import "github.com/urfave/cli/v2"
+import (
+	"os"
+
+	"github.com/urfave/cli/v2"
+	"github.com/sebnyberg/flagtags"
+)
 
 type config struct {
 	Port        int `value:3001`
@@ -68,7 +73,7 @@ var conf config
 
 func main() {
 	flags := flagtags.ParseFlags(&config)
-	app := &cli.App{flags: flags}
+	app := &cli.App{Flags: flags}
 	app.Run(os.Args)
 }
 ```
