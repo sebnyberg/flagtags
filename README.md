@@ -4,7 +4,7 @@ Tag struct fields to generate `urfave/cli/v2` flags.
 
 ## Example
 
-To bind a simple config struct to `urfave/cli/v2` flags, this code is required:
+To bind a config struct to `urfave/cli/v2` flags and env vars, this code is required:
 
 ```go
 type config struct {
@@ -24,7 +24,7 @@ flags := []cli.Flag{
 
 This package provides some sensible defaults and tags for placing this initialization directly in the struct.
 
-Equivalent code this library:
+Equivalent code using flagtags:
 
 ```go
 type config struct {
