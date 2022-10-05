@@ -81,6 +81,26 @@ func main() {
 }
 ```
 
+Output:
+
+```bash
+$ go run main.go
+NAME:
+   main - A new cli application
+
+USAGE:
+   main [global options] command [command options] [arguments...]
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --disable-auth        (default: false) [$DISABLE_AUTH]
+   --help, -h            show help (default: false)
+   --jwt-sign-key value   [$JWT_SIGN_KEY]
+   --port value          (default: 3001) [$PORT]
+```
+
 ## Tags and sensible defaults
 
 When a specific tag is missing, sensible defaults are applied based on the name and primitive type of the struct field. See next section.
