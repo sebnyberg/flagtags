@@ -4,22 +4,44 @@ Tag struct fields to generate `urfave/cli/v2` flags.
 
 ## Example
 
-To bind a config struct to `urfave/cli/v2` flags and env vars, this code is required:
+Binding flags in `urfave/cli/v2` to a struct requires the following code:
 
 ```go
+package main
+
+import "github.com/urfave/cli/v2"
+
 type config struct {
-  Port int
-  DisableAuth bool
-  JWTSignKey string
+	Port        int
+	DisableAuth bool
+	JWTSignKey  string
 }
 
 var conf config
 
-flags := []cli.Flag{
-  cli.IntFlag{Name: "port", EnvVars: []string{"PORT"}, Value: 3001, Destination: &conf.Port},
-  cli.BoolFlag{Name: "disable-auth", EnvVars: []string{"DISABLE_AUTH"}, Value: false, Destination: &conf.EnableAuth},
-  cli.StringFlag{Name: "jwt-sign-key", EnvVars: []string{"JWT_SIGN_KEY"}, Value: "", Destination: &conf.JWTSignKey},
+func main() {
+	flags := []cli.Flag{
+		cli.IntFlag{
+			Name:        "port",
+			EnvVars:     []string{"PORT"},
+			Value:       3001,
+			Destination: &conf.Port,
+		},
+		cli.BoolFlag{
+			Name:        "disable-auth",
+			EnvVars:     []string{"DISABLE_AUTH"},
+			Value:       false,
+			Destination: &conf.DisableAuth,
+		},
+		cli.StringFlag{
+			Name:        "jwt-sign-key",
+			EnvVars:     []string{"JWT_SIGN_KEY"},
+			Value:       "",
+			Destination: &conf.JWTSignKey,
+		},
+	}
 }
+
 ```
 
 This package provides some sensible defaults and tags for placing this initialization directly in the struct.
@@ -27,15 +49,21 @@ This package provides some sensible defaults and tags for placing this initializ
 Equivalent code using flagtags:
 
 ```go
+package main
+
+import "github.com/urfave/cli/v2"
+
 type config struct {
-  Port int `value:"3001"`
-  DisableAuth bool
-  JWTSignKey string
+	Port        int `value:3001`
+	DisableAuth bool
+	JWTSignKey  string
 }
 
 var conf config
 
-flags := flagtags.ParseFlags(config)
+func main() {
+	flags := flagtags.ParseFlags(config)
+}
 ```
 
 ## Tags and sensible defaults
