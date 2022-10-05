@@ -67,6 +67,7 @@ type config struct {
 var conf config
 
 func main() {
+	flags := flagtags.ParseFlags(&config)
 	app := &cli.App{flags: flags}
 	app.Run(os.Args)
 }
