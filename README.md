@@ -1,5 +1,7 @@
 # flagtags
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/sebnyberg/flagtags.svg)](https://pkg.go.dev/github.com/sebnyberg/flagtags)
+
 Tag struct fields to generate `urfave/cli/v2` flags.
 
 ## Example
