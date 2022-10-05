@@ -25,19 +25,19 @@ var conf config
 
 func main() {
 	flags := []cli.Flag{
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:        "port",
 			EnvVars:     []string{"PORT"},
 			Value:       3001,
 			Destination: &conf.Port,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "disable-auth",
 			EnvVars:     []string{"DISABLE_AUTH"},
 			Value:       false,
 			Destination: &conf.DisableAuth,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "jwt-sign-key",
 			EnvVars:     []string{"JWT_SIGN_KEY"},
 			Value:       "",
@@ -57,22 +57,25 @@ Equivalent code using flagtags:
 package main
 
 import (
+	"log"
 	"os"
 
-	"github.com/urfave/cli/v2"
 	"github.com/sebnyberg/flagtags"
+	"github.com/urfave/cli/v2"
 )
 
 type config struct {
-	Port        int `value:3001`
+	Port        int `value:"3001"`
 	DisableAuth bool
 	JWTSignKey  string
 }
 
-var conf config
-
 func main() {
-	flags := flagtags.ParseFlags(&config)
+	var conf config
+	flags, err := flagtags.ParseFlags(&conf)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	app := &cli.App{Flags: flags}
 	app.Run(os.Args)
 }
