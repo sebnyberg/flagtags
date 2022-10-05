@@ -9,10 +9,14 @@ Binding flags in `urfave/cli/v2` to a struct requires the following code:
 ```go
 package main
 
-import "github.com/urfave/cli/v2"
+import (
+	"os"
+
+	"github.com/urfave/cli/v2"
+)
 
 type config struct {
-	Port        int
+	Port        int `value:3001`
 	DisableAuth bool
 	JWTSignKey  string
 }
@@ -40,8 +44,9 @@ func main() {
 			Destination: &conf.JWTSignKey,
 		},
 	}
+	app := &cli.App{flags: flags}
+	app.Run(os.Args)
 }
-
 ```
 
 This package provides some sensible defaults and tags for placing this initialization directly in the struct.
@@ -62,7 +67,8 @@ type config struct {
 var conf config
 
 func main() {
-	flags := flagtags.ParseFlags(config)
+	app := &cli.App{flags: flags}
+	app.Run(os.Args)
 }
 ```
 
