@@ -8,14 +8,10 @@ Each configurable option should exist in three forms:
 2. CLI flag (--kebab-case)
 3. Environment variable (SCREAMING_SNAKE_CASE)
 
-Keeping the three in sync requires a lot of boilerplate code.
+Keeping the three in sync is tedious and error-prone.
 
 This package uses a struct as the source of truth to generate `urfave/cli/v2`
-flags, providing tags for overrides and additional options. 
-
-## Why?
-
-Because writing out config options one-by-one is error-prone.
+flags with consistent naming conventions.
 
 ## Example
 
