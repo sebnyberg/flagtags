@@ -3,8 +3,11 @@ package flagtags
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 )
@@ -18,29 +21,47 @@ var (
 	ErrNotSupported  = errors.New("unsupported type")
 )
 
-// MustParseFlags parses flag tags from the provided struct.
-// If ParseFlags returns an error, this panics.
-// See ParseFlags for more info.
+type Options struct {
+	// EnvPrefix is put in front of each env var, literally. For example, the
+	// prefix "MYAPP_" would give an env var of "MYAPP_MY_FIELD".
+	EnvPrefix string
+}
+
+var defaultOpts Options
+
+// MustParseFlags parses flag tags from the provided struct and panics on err.
 func MustParseFlags(s interface{}) []cli.Flag {
-	flags, err := ParseFlags(s)
+	return MustParseFlagsWithOpts(s, defaultOpts)
+}
+
+// MustParseFlagsWithOpts parses flag tags from the provided struct and panics
+// on err.
+func MustParseFlagsWithOpts(s interface{}, opts Options) []cli.Flag {
+	flags, err := ParseFlagsWithOpts(s, opts)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	return flags
 }
 
-// ParseFlags parses flags from the struct fields and their tags.
+// ParseFlags parses flags from struct field tags using default options. For
+// more info, see ParseFlagsWithOpts.
+func ParseFlags(s interface{}) ([]cli.Flag, error) {
+	return ParseFlagsWithOpts(s, defaultOpts)
+}
+
+// ParseFlagsWithOpts parses flags from the struct fields and their tags.
 //
 // Supported field types are "int", "string", "bool", "float64".
 // Supported tags are "name", "env", "value", "usage".
 //
-// By default (without tags),
-// value is the default value of the primitive type,
-// usage is empty,
-// env is the field name in SCREAMING_SNAKE_CASE,
-// name is the field name in kebab-case.
+// By default (without tags), value is the default value of the primitive type,
+// usage is empty, env is the field name in SCREAMING_SNAKE_CASE, name is the
+// field name in kebab-case.
 //
-func ParseFlags(s interface{}) ([]cli.Flag, error) {
+// Please see flagtags.Options for customization.
+func ParseFlagsWithOpts(s interface{}, opts Options) ([]cli.Flag, error) {
 	// Return error if reference is nil
 	if s == nil {
 		return nil, ErrNilValue
@@ -63,7 +84,7 @@ func ParseFlags(s interface{}) ([]cli.Flag, error) {
 	var err error
 	flags := make([]cli.Flag, 0, v.NumField())
 	for i := 0; i < v.NumField(); i++ {
-		newFlags, fieldErr := flagsFromField(t.Field(i), v.Field(i))
+		newFlags, fieldErr := flagsFromField(t.Field(i), v.Field(i), &opts)
 		if fieldErr != nil && err == nil {
 			err = fieldErr
 		}
@@ -73,10 +94,14 @@ func ParseFlags(s interface{}) ([]cli.Flag, error) {
 	return flags, err
 }
 
-func flagsFromField(t reflect.StructField, v reflect.Value) ([]cli.Flag, error) {
+func flagsFromField(
+	t reflect.StructField,
+	v reflect.Value,
+	opts *Options,
+) ([]cli.Flag, error) {
+	// If not set, infer from struct field name
 	var name string
 	name, ok := t.Tag.Lookup("name")
-	// If not set, infer from struct field name
 	if !ok {
 		name = toKebabCase(t.Name)
 	}
@@ -86,6 +111,9 @@ func flagsFromField(t reflect.StructField, v reflect.Value) ([]cli.Flag, error) 
 	env, ok = t.Tag.Lookup("env")
 	if !ok {
 		env = toScreamingSnakeCase(t.Name)
+	}
+	if opts.EnvPrefix != "" {
+		env = opts.EnvPrefix + env
 	}
 
 	if !v.CanSet() {
@@ -166,4 +194,21 @@ func intFlag(name string, value int, destination *int, envVar string, usage stri
 
 func float64Flag(name string, value float64, destination *float64, envVar string, usage string) *cli.Float64Flag {
 	return &cli.Float64Flag{Name: name, Value: value, EnvVars: []string{envVar}, Destination: destination, Usage: usage}
+}
+
+var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+func toSnakeCase(str string) string {
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
+}
+
+func toKebabCase(str string) string {
+	return strings.ReplaceAll(toSnakeCase(str), "_", "-")
+}
+
+func toScreamingSnakeCase(str string) string {
+	return strings.ToUpper(toSnakeCase(str))
 }

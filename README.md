@@ -2,58 +2,22 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/sebnyberg/flagtags.svg)](https://pkg.go.dev/github.com/sebnyberg/flagtags)
 
-Tag struct fields to generate `urfave/cli/v2` flags.
+Each configurable option should exist in three forms:
+
+1. Struct field (PascalCase)
+2. CLI flag (--kebab-case)
+3. Environment variable (SCREAMING_SNAKE_CASE)
+
+Keeping the three in sync requires a lot of boilerplate code.
+
+This package uses a struct as the source of truth to generate `urfave/cli/v2`
+flags, providing tags for overrides and additional options. 
+
+## Why?
+
+Because writing out config options one-by-one is error-prone.
 
 ## Example
-
-Binding flags in `urfave/cli/v2` to a struct requires the following code:
-
-```go
-package main
-
-import (
-	"os"
-
-	"github.com/urfave/cli/v2"
-)
-
-type config struct {
-	Port        int `value:3001`
-	DisableAuth bool
-	JWTSignKey  string
-}
-
-var conf config
-
-func main() {
-	flags := []cli.Flag{
-		&cli.IntFlag{
-			Name:        "port",
-			EnvVars:     []string{"PORT"},
-			Value:       3001,
-			Destination: &conf.Port,
-		},
-		&cli.BoolFlag{
-			Name:        "disable-auth",
-			EnvVars:     []string{"DISABLE_AUTH"},
-			Value:       false,
-			Destination: &conf.DisableAuth,
-		},
-		&cli.StringFlag{
-			Name:        "jwt-sign-key",
-			EnvVars:     []string{"JWT_SIGN_KEY"},
-			Value:       "",
-			Destination: &conf.JWTSignKey,
-		},
-	}
-	app := &cli.App{Flags: flags}
-	app.Run(os.Args)
-}
-```
-
-This package provides some sensible defaults and tags for placing this initialization directly in the struct.
-
-Equivalent code using flagtags:
 
 ```go
 package main
@@ -73,41 +37,13 @@ type config struct {
 }
 
 func main() {
-	var conf config
-	flags, err := flagtags.ParseFlags(&conf)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	app := &cli.App{Flags: flags}
+	var opts flagtags.Options
+	opts.EnvPrefix = "MYAPP_"
+	flags := flagtags.ParseFlagsWithOpts(&config, opts)
+	app := &cli.App{flags: flags}
 	app.Run(os.Args)
 }
 ```
-
-Output:
-
-```bash
-$ go run main.go
-NAME:
-   main - A new cli application
-
-USAGE:
-   main [global options] command [command options] [arguments...]
-
-COMMANDS:
-   help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --disable-auth        (default: false) [$DISABLE_AUTH]
-   --help, -h            show help (default: false)
-   --jwt-sign-key value   [$JWT_SIGN_KEY]
-   --port value          (default: 3001) [$PORT]
-```
-
-## Tags and sensible defaults
-
-When a specific tag is missing, sensible defaults are applied based on the name and primitive type of the struct field. See next section.
-
-The presence of a tag takes precendence over sensible defaults.
 
 ### Supported flag fields (tags)
 
@@ -150,12 +86,15 @@ type config struct {
 
 func main() {
 	var conf config
+	var parseOpts flagtags.Options
+	parseOpts.EnvPrefix = "MYAPP_"
+	flags := flagtags.MustParseFlagsWithOpts(&conf, parseOpts)
 
 	app := &cli.App{
 		Name:     "server",
 		HelpName: "server",
 		Usage:    "run the server",
-		Flags:    flagtags.MustParseFlags(&conf),
+		Flags:    flags,
 		Action: func(c *cli.Context) error {
 			pretty.Println(conf)
 			return nil

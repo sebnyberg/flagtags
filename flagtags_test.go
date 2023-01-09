@@ -1,11 +1,10 @@
-package flagtags_test
+package flagtags
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/sebnyberg/flagtags"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,21 +17,21 @@ func Test_ParseFlags_Validation(t *testing.T) {
 		wantFlags []cli.Flag
 		wantErr   error
 	}{
-		{"nil reference", nil, nil, flagtags.ErrNilValue},
-		{"interface containing nil", NilInterface(nil), nil, flagtags.ErrNilValue},
-		{"argument must be pointer", struct{}{}, nil, flagtags.ErrMustBePtr},
-		{"map should return invalid struct", &map[string]bool{}, nil, flagtags.ErrInvalidStruct},
+		{"nil reference", nil, nil, ErrNilValue},
+		{"interface containing nil", NilInterface(nil), nil, ErrNilValue},
+		{"argument must be pointer", struct{}{}, nil, ErrMustBePtr},
+		{"map should return invalid struct", &map[string]bool{}, nil, ErrInvalidStruct},
 		{
 			"private field should err",
 			&struct {
 				name string `name:"a" env:"b"`
 			}{"a"},
 			[]cli.Flag{},
-			flagtags.ErrPrivateField,
+			ErrPrivateField,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			gotFlags, gotErr := flagtags.ParseFlags(tc.in)
+			gotFlags, gotErr := ParseFlags(tc.in)
 			if !cmp.Equal(gotErr, tc.wantErr, cmpopts.EquateErrors()) {
 				t.Errorf("expected err: %v, got: %v", tc.wantErr, gotErr)
 			}
@@ -98,12 +97,77 @@ func Test_ParseFlags(t *testing.T) {
 		},
 	}
 
-	flags, err := flagtags.ParseFlags(&testStruct)
+	flags, err := ParseFlags(&testStruct)
 	if err != nil {
 		t.Fatalf("expected nil error, got: %v", err)
 	}
 	if !cmp.Equal(flags, expected) {
-		t.Errorf("parsed flag did not match expected, got/want\n%v", cmp.Diff(expected, flags))
+		t.Errorf("parsed flags did not match expected, got/want\n%v",
+			cmp.Diff(expected, flags),
+		)
+	}
+}
+
+func Test_ParseFlagsWithOpts(t *testing.T) {
+	type testCase struct {
+		name string
+		s    interface{}
+		opts Options
+		want []cli.Flag
+	}
+
+	var testStruct struct {
+		HostURL string
+	}
+
+	cases := []testCase{
+		{
+			name: "EnvPrefix=lc",
+			s:    &testStruct,
+			opts: Options{
+				EnvPrefix: "lc",
+			},
+			want: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "host-url",
+					EnvVars:     []string{"lcHOST_URL"},
+					Value:       "",
+					Destination: &testStruct.HostURL,
+					Usage:       "",
+				},
+			},
+		},
+		{
+			name: "EnvPrefix=MYAPP_",
+			s:    &testStruct,
+			opts: Options{
+				EnvPrefix: "MYAPP_",
+			},
+			want: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "host-url",
+					EnvVars:     []string{"MYAPP_HOST_URL"},
+					Value:       "",
+					Destination: &testStruct.HostURL,
+					Usage:       "",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ParseFlagsWithOpts(tc.s, tc.opts)
+			if err != nil {
+				t.Fatalf("expected nil error, got: %v", err)
+			}
+			if !cmp.Equal(got, tc.want) {
+				t.Errorf(
+					"parsed flags did not match expected, got/want\n%v",
+					cmp.Diff(got, tc.want),
+				)
+			}
+		})
 	}
 }
 
@@ -137,11 +201,34 @@ func Test_ParseFlags_EmbeddedStruct(t *testing.T) {
 		},
 	}
 
-	flags, err := flagtags.ParseFlags(&testStruct)
+	flags, err := ParseFlags(&testStruct)
 	if err != nil {
 		t.Fatalf("expected nil error, got: %v", err)
 	}
 	if !cmp.Equal(flags, expected) {
 		t.Errorf("parsed flag did not match expected, got/want\n%v", cmp.Diff(expected, flags))
+	}
+}
+
+func Test_toSnakeCase(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"", ""},
+		{"already_snake", "already_snake"},
+		{"A", "a"},
+		{"AA", "aa"},
+		{"AaAa", "aa_aa"},
+		{"HTTPRequest", "http_request"},
+		{"BatteryLifeValue", "battery_life_value"},
+		{"Id0Value", "id0_value"},
+		{"ID0Value", "id0_value"},
+	}
+	for _, test := range tests {
+		have := toSnakeCase(test.input)
+		if have != test.want {
+			t.Errorf("input=%q:\nhave: %q\nwant: %q", test.input, have, test.want)
+		}
 	}
 }
