@@ -25,6 +25,10 @@ type Options struct {
 	// EnvPrefix is put in front of each env var, literally. For example, the
 	// prefix "MYAPP_" would give an env var of "MYAPP_MY_FIELD".
 	EnvPrefix string
+
+	// FlagPrefix is put in front of each cli flag. For example, the prefix
+	// "myapp-" would give a flag name of "myapp-my-field".
+	FlagPrefix string
 }
 
 var defaultOpts Options
@@ -104,6 +108,9 @@ func flagsFromField(
 	name, ok := t.Tag.Lookup("name")
 	if !ok {
 		name = toKebabCase(t.Name)
+	}
+	if opts.FlagPrefix != "" {
+		name = opts.FlagPrefix + name
 	}
 
 	// If not set, infer from struct field name

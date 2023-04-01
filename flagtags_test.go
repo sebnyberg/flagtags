@@ -153,6 +153,22 @@ func Test_ParseFlagsWithOpts(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "FlagPrefix=myapp-",
+			s:    &testStruct,
+			opts: Options{
+				FlagPrefix: "myapp-",
+			},
+			want: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "myapp-host-url",
+					EnvVars:     []string{"HOST_URL"},
+					Value:       "",
+					Destination: &testStruct.HostURL,
+					Usage:       "",
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
