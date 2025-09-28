@@ -63,6 +63,7 @@ func Test_ParseFlags(t *testing.T) {
 		Nested      struct {
 			A            string `value:"aa"` // --nested-a / NESTED_A
 			LogLevel     string // --nested-log-level / NESTED_LOG_LEVEL
+			OutputFormat string `name:"output-format"` // --nested-output-format / NESTED_OUTPUT_FORMAT
 			DoubleNested struct {
 				CertPath    string `name:"path" value:"mypath"` // --nested-double-path / NESTED_DOUBLE_PATH
 				AnotherPath string // --nested-double-anotherpath / NESTED_DOUBLE_ANOTHER_PATH
@@ -133,6 +134,13 @@ func Test_ParseFlags(t *testing.T) {
 			EnvVars:     []string{"NESTED_LOG_LEVEL"},
 			Value:       "",
 			Destination: &testStruct.Nested.LogLevel,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "nested-output-format",
+			EnvVars:     []string{"NESTED_OUTPUT_FORMAT"},
+			Value:       "",
+			Destination: &testStruct.Nested.OutputFormat,
 			Usage:       "",
 		},
 		&cli.StringFlag{
