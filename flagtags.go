@@ -19,6 +19,7 @@ var (
 	ErrInvalidStruct = errors.New("provided value was not a struct")
 	ErrPrivateField  = errors.New("private field")
 	ErrNotSupported  = errors.New("unsupported type")
+	ErrNilStructPtr  = errors.New("nested structs must be non-nil")
 )
 
 type Options struct {
@@ -95,7 +96,10 @@ func ParseFlagsWithOpts(s interface{}, opts Options) ([]cli.Flag, error) {
 		flags = append(flags, newFlags...)
 	}
 
-	return flags, err
+	if err != nil {
+		return nil, err
+	}
+	return flags, nil
 }
 
 func flagsFromField(
@@ -135,7 +139,15 @@ func flagsFromField(
 
 	strValue, _ := t.Tag.Lookup("value")
 	usage, _ := t.Tag.Lookup("usage")
+
+	// Handle pointer to struct case
 	if v.Kind() == reflect.Ptr {
+		if v.Type().Elem().Kind() == reflect.Struct && v.IsNil() {
+			// Return error if pointer to struct is nil
+			return nil, fmt.Errorf("nested structs %w, '%s' was nil", ErrNilStructPtr, t.Name)
+		}
+
+		// For non-struct pointers, dereference as before
 		v = v.Elem()
 	}
 	iface := v.Addr().Interface()

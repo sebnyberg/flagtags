@@ -1,10 +1,10 @@
 package flagtags
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,13 +26,23 @@ func Test_ParseFlags_Validation(t *testing.T) {
 			&struct {
 				name string `name:"a" env:"b"`
 			}{"a"},
-			[]cli.Flag{},
+			nil,
 			ErrPrivateField,
+		},
+		{
+			"nil struct pointer should err",
+			&struct {
+				Config *struct {
+					Value string
+				}
+			}{Config: nil},
+			nil,
+			ErrNilStructPtr,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			gotFlags, gotErr := ParseFlags(tc.in)
-			if !cmp.Equal(gotErr, tc.wantErr, cmpopts.EquateErrors()) {
+			if !errors.Is(gotErr, tc.wantErr) {
 				t.Errorf("expected err: %v, got: %v", tc.wantErr, gotErr)
 			}
 			if !cmp.Equal(gotFlags, tc.wantFlags) {
@@ -58,7 +68,15 @@ func Test_ParseFlags(t *testing.T) {
 				AnotherPath string // --nested-double-anotherpath / NESTED_DOUBLE_ANOTHER_PATH
 			} `name:"double"`
 		}
+		PtrStruct *struct {
+			Value string `value:"ptrval"` // --ptr-struct-value / PTR_STRUCT_VALUE
+		}
 	}
+
+	// Initialize the pointer struct
+	testStruct.PtrStruct = &struct {
+		Value string `value:"ptrval"`
+	}{}
 
 	expected := []cli.Flag{
 		&cli.StringFlag{
@@ -129,6 +147,13 @@ func Test_ParseFlags(t *testing.T) {
 			EnvVars:     []string{"NESTED_DOUBLE_ANOTHER_PATH"},
 			Value:       "",
 			Destination: &testStruct.Nested.DoubleNested.AnotherPath,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "ptr-struct-value",
+			EnvVars:     []string{"PTR_STRUCT_VALUE"},
+			Value:       "ptrval",
+			Destination: &testStruct.PtrStruct.Value,
 			Usage:       "",
 		},
 	}
