@@ -50,6 +50,14 @@ func Test_ParseFlags(t *testing.T) {
 		F64         float64 `name:"f64" env:"F64" value:"0.5" usage:"F64"`
 		HostURL     string
 		GRPCEnabled bool
+		Nested      struct {
+			A            string `value:"aa"` // --nested-a / NESTED_A
+			LogLevel     string // --nested-log-level / NESTED_LOG_LEVEL
+			DoubleNested struct {
+				CertPath    string `name:"path" value:"mypath"` // --nested-double-path / NESTED_DOUBLE_PATH
+				AnotherPath string // --nested-double-anotherpath / NESTED_DOUBLE_ANOTHER_PATH
+			} `name:"double"`
+		}
 	}
 
 	expected := []cli.Flag{
@@ -93,6 +101,34 @@ func Test_ParseFlags(t *testing.T) {
 			EnvVars:     []string{"GRPC_ENABLED"},
 			Value:       false,
 			Destination: &testStruct.GRPCEnabled,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "nested-a",
+			EnvVars:     []string{"NESTED_A"},
+			Value:       "aa",
+			Destination: &testStruct.Nested.A,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "nested-log-level",
+			EnvVars:     []string{"NESTED_LOG_LEVEL"},
+			Value:       "",
+			Destination: &testStruct.Nested.LogLevel,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "nested-double-path",
+			EnvVars:     []string{"NESTED_DOUBLE_PATH"},
+			Value:       "mypath",
+			Destination: &testStruct.Nested.DoubleNested.CertPath,
+			Usage:       "",
+		},
+		&cli.StringFlag{
+			Name:        "nested-double-another-path",
+			EnvVars:     []string{"NESTED_DOUBLE_ANOTHER_PATH"},
+			Value:       "",
+			Destination: &testStruct.Nested.DoubleNested.AnotherPath,
 			Usage:       "",
 		},
 	}

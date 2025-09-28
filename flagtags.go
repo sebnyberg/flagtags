@@ -117,7 +117,13 @@ func flagsFromField(
 	var env string
 	env, ok = t.Tag.Lookup("env")
 	if !ok {
-		env = toScreamingSnakeCase(t.Name)
+		// Use custom name if available, otherwise use field name
+		var envName string
+		envName, hasCustomName := t.Tag.Lookup("name")
+		if !hasCustomName {
+			envName = t.Name
+		}
+		env = toScreamingSnakeCase(envName)
 	}
 	if opts.EnvPrefix != "" {
 		env = opts.EnvPrefix + env
@@ -136,7 +142,19 @@ func flagsFromField(
 
 	switch v.Kind() {
 	case reflect.Struct:
-		return ParseFlags(iface)
+		// For nested structs, use the custom name (if provided) for prefixes
+		var prefixName string
+		prefixName, ok := t.Tag.Lookup("name")
+		if !ok {
+			prefixName = t.Name
+		}
+
+		optsCopy := *opts
+		if !t.Anonymous {
+			optsCopy.FlagPrefix = opts.FlagPrefix + toKebabCase(prefixName) + "-"
+			optsCopy.EnvPrefix = opts.EnvPrefix + toScreamingSnakeCase(prefixName) + "_"
+		}
+		return ParseFlagsWithOpts(iface, optsCopy)
 	case reflect.String:
 		dst, ok := iface.(*string)
 		if !ok {
