@@ -217,31 +217,6 @@ GLOBAL OPTIONS:
    --help, -h            show help
 ```
 
-## Error Handling
-
-The library provides specific error types for different validation failures:
-
-```go
-config := &Config{}
-flags, err := flagtags.ParseFlags(config)
-if err != nil {
-    switch {
-    case errors.Is(err, flagtags.ErrNilValue):
-        log.Fatal("nil config provided")
-    case errors.Is(err, flagtags.ErrMustBePtr):
-        log.Fatal("config must be a pointer to struct")
-    case errors.Is(err, flagtags.ErrPrivateField):
-        log.Fatal("all struct fields must be exported")
-    case errors.Is(err, flagtags.ErrNotSupported):
-        log.Fatal("unsupported field type")
-    case errors.Is(err, flagtags.ErrNilStructPtr):
-        log.Fatal("nested struct pointers must be non-nil")
-    default:
-        log.Fatalf("unexpected error: %v", err)
-    }
-}
-```
-
 For convenience, use `MustParseFlags()` or `MustParseFlagsWithOpts()` to panic on errors during application startup.
 
 ## API Reference
